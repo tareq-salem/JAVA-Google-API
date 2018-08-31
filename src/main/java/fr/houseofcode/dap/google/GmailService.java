@@ -4,92 +4,147 @@
 package fr.houseofcode.dap.google;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.google.api.client.auth.oauth2.Credential;
-import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
-import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
-import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
-import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.jackson2.JacksonFactory;
-import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.gmail.Gmail;
-import com.google.api.services.gmail.GmailScopes;
-
-import fr.houseofcode.dap.Launcher;
+import com.google.api.services.gmail.model.Label;
+import com.google.api.services.gmail.model.ListMessagesResponse;
+import com.google.api.services.gmail.model.Message;
 
 /**
  * @author adminHOC
  *
  */
-public class GmailService {
+@RestController
+@RequestMapping("/emails")
+public class GmailService extends GoogleService {
 
-    /** Application name. */
-    private static final String APPLICATION_NAME = "Hoc Dap Admin";
-    /** Json factory. */
-    private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
-    /** Folder to store user Credential. */
-    private static final String TOKENS_DIRECTORY_PATH = "tokens";
+    /**
+     * Logger.
+     */
+    private static final Logger LOG = LogManager.getLogger();
+
     /** Small enough. */
     //private static final int SMALL_MAX_ITEM_PER_PAGE = 10;
 
-    //public static final String defaultUser = "salemtareq5@gmail.com";
-    // private static final List<String> SCOPES =
-    // Collections.singletonList(GmailScopes.GMAIL_LABELS);
+    /**
+     * Build a GmailService using specific Configuration.
+     */
+    public GmailService() {
+        super();
+    }
 
     /**
-     *
+     * create.
+     * @param userId the userId
+     * @return the service
+     * @throws GeneralSecurityException the GeneralSecurityException
+     * @throws IOException the IOException
      */
-
-    private static final String CREDENTIALS_FILE_PATH = "/credentials.json";
-    /** Build a new authorized API client service. */
-    private static final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-
-    /**
-     * Create a new gmailService.
-     * @return a GmailService
-     * @throws IOException the IO
-     */
-    public Gmail getService() throws IOException {
-
-        /** Gmail service */
-        Gmail service = new Gmail.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
-                .setApplicationName(APPLICATION_NAME).build();
-
+    private Gmail getService(final String userId) throws GeneralSecurityException, IOException {
+        final NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
+        Gmail service = new Gmail.Builder(httpTransport, getJsonFactory(), getCredentials(userId))
+                .setApplicationName(getConfiguration().getApplicationName()).build();
         return service;
     }
 
     /**
-     * Creates an authorized Credential object.
-     * @param httpTransport the httpTransport
-     * @return the credential
-     * @throws IOException the IOException
+     * Retrieve labels from Google account.
+     * @param userId The internal userId
+     * @param labelId messageId The userId
+     * @return the Google Label
+     * @throws IOException when Google error occurs
+     * @throws GeneralSecurityException the GeneralSecurityException
      */
-    private static Credential getCredentials(final NetHttpTransport httpTransport) throws IOException {
-        /**
-         * Global instance of the scopes required by this quickstart. If modifying these
-         * scopes, delete your previously saved credentials/ folder.
-         */
-        List<String> scopes = new ArrayList<String>();
-        scopes.add(GmailScopes.GMAIL_LABELS);
-        scopes.add(GmailScopes.GMAIL_READONLY);
+    @RequestMapping("/label/{labelid}")
+    public Label displayLabel(@RequestParam("userkey") final String userId,
+            @PathVariable("labelid") final String labelId) throws IOException, GeneralSecurityException {
+        Gmail service = getService(userId);
+        Label label = service.users().labels().get("me", labelId).execute();
 
-        // Load client secrets.
-        InputStream in = Launcher.class.getResourceAsStream(CREDENTIALS_FILE_PATH);
-        GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
+        System.out.println("Label " + label.getName() + " retrieved.");
+        System.out.println(label.toPrettyString());
 
-        // Build flow and trigger user authorization request.
-        GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(httpTransport, JSON_FACTORY,
-                clientSecrets, scopes)
-                        .setDataStoreFactory(new FileDataStoreFactory(new java.io.File(TOKENS_DIRECTORY_PATH)))
-                        .setAccessType("offline").build();
-        return new AuthorizationCodeInstalledApp(flow, new LocalServerReceiver()).authorize("user");
+        return label;
     }
 
+    /**
+     * create.
+     * @param userId userId
+     * @return return
+     * @throws IOException IOException
+     * @throws GeneralSecurityException IOException
+     */
+    @RequestMapping("/unread")
+    public Integer getNbUnreadEmail(@RequestParam("userkey") final String userId)
+            throws IOException, GeneralSecurityException {
+        List<Message> allMessages = getMessages(userId, "me", "is:UNREAD in:inbox");
+        System.out.println(allMessages);
+        return allMessages.size();
+    }
+
+    /**
+     * create.
+     * @param userId userId
+     * @param gUserId gUserId
+     * @param query query
+     * @return return
+     * @throws IOException IOException
+     * @throws GeneralSecurityException GeneralSecurityException
+     */
+    @RequestMapping("/message/{guserid}")
+    private List<Message> getMessages(@RequestParam("userkey") final String userId,
+            @PathVariable("guserid") final String gUserId, final String query)
+            throws IOException, GeneralSecurityException {
+        Gmail service = getService(userId);
+        ListMessagesResponse response = service.users().messages().list(gUserId).setQ(query).execute();
+
+        List<Message> messages = new ArrayList<Message>();
+        while (response.getMessages() != null) {
+            messages.addAll(response.getMessages());
+            if (response.getNextPageToken() != null) {
+                String pageToken = response.getNextPageToken();
+                response = service.users().messages().list(gUserId).setQ(query).setPageToken(pageToken).execute();
+                messages.addAll(response.getMessages());
+            } else {
+                break;
+            }
+        }
+
+        return messages;
+    }
+
+    /**
+     * list message from Google account.
+     *
+     * @param userId the userId ("me")
+     * @param query the query
+     * @return messages
+     * @throws IOException the OException
+     * @throws GeneralSecurityException the GeneralSecurityException
+     * @throws
+     */
+    public String listMessages(final String userId, final String query) throws IOException, GeneralSecurityException {
+        List<Message> messages = getMessages(userId, "me", query);
+        /** structurer la String de resultat*/
+        String builtMessage = null;
+        for (Message message : messages) {
+            builtMessage += message.getId() + System.getProperty("line.separator");
+        }
+
+        //LOG.info("Nb unread Emails :" + messages.size());
+
+        return builtMessage;
+    }
 }
