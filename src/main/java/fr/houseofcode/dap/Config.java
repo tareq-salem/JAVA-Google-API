@@ -10,7 +10,7 @@ package fr.houseofcode.dap;
 public class Config {
 
     /** Folder to store autorisations grant by user. */
-    private static final String TOKEN_FOLDER = "google/credential";
+    private static final String TOKEN_FOLDER = "tokens";
     /** Location of Json "Google ID" file. */
     private static final String CLIENT_SECRET_FILE = "/credentials.json";
     /** display name of the application. */

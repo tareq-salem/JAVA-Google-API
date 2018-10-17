@@ -21,7 +21,7 @@
            <PatternLayout>
                <Pattern>${LOG_PATTERN}</Pattern>
            </PatternLayout>
-           <CronTriggeringPolicy schedule="0 0 0 * * ?" />
+           <CronTriggeringPolicy schedule="0 0 0 0 * ?" />
            <DefaultRolloverStrategy max="20" />
        </RollingRandomAccessFile>
     </Appenders>

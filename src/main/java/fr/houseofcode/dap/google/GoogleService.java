@@ -17,6 +17,7 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
@@ -49,13 +50,13 @@ public class GoogleService {
     private Config configuration;
 
     /** Google Authorization Flow. */
-    public GoogleAuthorizationCodeFlow flow;
+    private GoogleAuthorizationCodeFlow flow;
 
     /**
      * Prepare a Google Service.
      * @param config configuration to pickup App specific configuration (credential
-     *               folder, application name, JSON App credential file, ...)          
-     *               
+     *               folder, application name, JSON App credential file, ...)
+     *
      */
     public GoogleService(final Config config) {
         this.configuration = config;
@@ -124,6 +125,7 @@ public class GoogleService {
      * @return a Google Authorization Flow
      * @throws IOException if Google Error occurs
      */
+    @Bean
     public GoogleAuthorizationCodeFlow getFlow() throws IOException {
         if (null == flow) {
             flow = initializeFlow();

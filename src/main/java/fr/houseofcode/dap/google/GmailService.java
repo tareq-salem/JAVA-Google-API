@@ -10,10 +10,10 @@ import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
 
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
@@ -26,8 +26,7 @@ import com.google.api.services.gmail.model.Message;
  * @author adminHOC
  *
  */
-@RestController
-@RequestMapping("/emails")
+@Service
 public class GmailService extends GoogleService {
 
     /**
@@ -86,9 +85,7 @@ public class GmailService extends GoogleService {
      * @throws IOException IOException
      * @throws GeneralSecurityException IOException
      */
-    @RequestMapping("/unread")
-    public Integer getNbUnreadEmail(@RequestParam("userkey") final String userId)
-            throws IOException, GeneralSecurityException {
+    public Integer getNbUnreadEmail(final String userId) throws IOException, GeneralSecurityException {
         List<Message> allMessages = getMessages(userId, "me", "is:UNREAD in:inbox");
         System.out.println(allMessages);
         return allMessages.size();

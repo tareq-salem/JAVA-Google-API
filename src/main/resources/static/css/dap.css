@@ -1,0 +1,27 @@
+body {
+	box-sizing : border-box;
+	background-color: black;
+	font-size : 20px; 
+}
+
+h1, p {
+	color: white;
+}
+
+.main {
+	background-color: white;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+td, th {
+	border: solid thin red;
+	padding: 5px;
+	font-size : 15px; 
+}
+
+th {
+	border-width: 1px;
+}

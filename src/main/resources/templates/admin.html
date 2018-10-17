@@ -1,0 +1,39 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport"
+	content="width=device-width, height=device-height, initial-scale=1.0, minimum-scale=1.0" />
+<meta name="description" content="The Dap trainning project admin" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="dap" />
+<link rel="stylesheet" type="text/css" th:href="@{/css/dap.css}" />
+<title th:text="#{app.title}">credentialList placeholder</title>
+</head>
+<body>
+	<header>
+		<h1>credentialList</h1>
+		<p>Salam PapaCoquin :) !</p>
+	</header>
+	<div class="main">
+		<table>
+			<tr>
+				<th>Name</th>
+				<th>Actions</th>
+				<th>accessToken</th>
+				<th>refreshToken</th>
+				<th>expirationTimeMilliseconds</th>
+			</tr>
+			<tr th:each="item : ${credentialList}">
+				<td th:text="${item.key}"></td>
+				<td ><a href="admin.html" 
+                 th:href="@{/account/remove/{userId}(userId=${item.key})}">Remove</a>
+                </td>
+				<td th:text="${item.value.accessToken}"></td>
+				<td th:text="${item.value.refreshToken}"></td>
+				<td th:text="${item.value.expirationTimeMilliseconds}"></td>
+			</tr>
+		</table>
+	</div>
+
+</body>
+</html>
