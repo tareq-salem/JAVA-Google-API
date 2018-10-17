@@ -2,7 +2,9 @@ package fr.houseofcode.dap.google.web;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.util.List;
 
+import javax.persistence.ManyToOne;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
@@ -22,6 +24,9 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 import com.google.api.client.http.GenericUrl;
 
 import fr.houseofcode.dap.Config;
+import fr.houseofcode.dap.data.AppUser;
+import fr.houseofcode.dap.data.AppUserRepository;
+import fr.houseofcode.dap.data.GoogleUser;
 import fr.houseofcode.dap.google.GoogleAccount;
 
 /**
@@ -48,6 +53,18 @@ public class GoogleController {
     private Config configuration;
 
     /**
+    *
+    */
+    @Autowired
+    private AppUserRepository repository;
+
+    /**
+    *
+    */
+    @ManyToOne
+    private AppUser appUser;
+
+    /**
      * Add a Google account (user will be prompt to connect and accept required
      * access).
      * @param userId  the user to store Data
@@ -64,16 +81,17 @@ public class GoogleController {
         Boolean canAdd = null;
         String response;
 
-        // Vérifier que l'utilisateur (userKey) existe 
-        // Vérifier que account n'existe pas (googleAccount)
-
-        if (userKey != null && googleAccount == null) {
-
-        }
-
         canAdd = googleAccount.canAddAccount(userKey);
 
-        if (canAdd) {
+        // Vérifier que l'utilisateur (userKey) existe
+
+        AppUser currentUser = repository.getByUserKey(userKey);
+
+        // Vérifier que account n'existe pas (googleAccount). rechercher dasns le compte lié à currentUser
+
+        List<GoogleUser> gUsers = currentUser.getGuser();
+
+        if (canAdd && userKey != null && googleAccount == null) {
             // redirect to the authorization flow
             final AuthorizationCodeRequestUrl authorizationUrl = flow.newAuthorizationUrl();
             authorizationUrl.setRedirectUri(buildRedirectUri(request, configuration.getoAuth2CallbackUrl()));
@@ -111,7 +129,10 @@ public class GoogleController {
                 redirect = "redirecete:/email/unread/" + userKey;
                 // sauvegarder lien entre User -> Account
 
-            } else {
+                AppUser currentUser = repository.getByUserKey(userKey);
+
+                LOG.info(currentUser);
+
                 redirect = "error";
             }
         } catch (ServletException e) {

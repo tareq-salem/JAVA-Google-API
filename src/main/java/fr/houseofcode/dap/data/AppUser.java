@@ -47,6 +47,21 @@ public class AppUser {
         this.userKey = user;
     }
 
+    /**
+     *
+     * @return userKey userKey
+     */
+    public String getUserKey() {
+        return userKey;
+    }
+
+    /**
+     * @return the guser
+     */
+    public List<GoogleUser> getGuser() {
+        return guser;
+    }
+
     /* (non-Javadoc)
      * @see java.lang.Object#toString()
      */
