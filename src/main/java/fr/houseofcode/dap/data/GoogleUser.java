@@ -13,7 +13,7 @@ import javax.persistence.ManyToOne;
  *
  */
 @Entity
-public class GmailUser {
+public class GoogleUser {
 
     /**
     *
@@ -31,14 +31,14 @@ public class GmailUser {
     /**
     *
     */
-    protected GmailUser() {
+    protected GoogleUser() {
     }
 
     /**
     *
     * @param user internal user
     */
-    public GmailUser(final AppUser user) {
+    public GoogleUser(final AppUser user) {
         this.appUser = user;
     }
 

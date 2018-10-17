@@ -6,9 +6,6 @@ package fr.houseofcode.dap.google.web;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,11 +39,10 @@ public class UserController {
      * @throws IOException the IOException
      * @throws GeneralSecurityException the GeneralSecurityException
      */
-    @RequestMapping("/user/add/{userId}")
-    public void addUser(@PathVariable final String userKey, final HttpServletRequest request,
-            final HttpSession session) {
+    @RequestMapping("/user/add/{userKey}")
+    public void addUser(@PathVariable("userKey") final String userKey) {
         AppUser savedEntity = repository.save(new AppUser(userKey));
 
-        LOG.debug(savedEntity);
+        LOG.info(savedEntity);
     }
 }

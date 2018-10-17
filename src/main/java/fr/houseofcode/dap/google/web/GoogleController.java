@@ -57,20 +57,28 @@ public class GoogleController {
      * @throws IOException the IOException
      * @throws GeneralSecurityException the GeneralSecurityException
      */
-    @RequestMapping("/account/add/{userId}")
-    public String addAccount(@PathVariable final String userId, final HttpServletRequest request,
+    @RequestMapping("/account/add/{googleAccount}") // /account/add/bob?userKey=gertrude
+    public String addAccount(@PathVariable("googleAccount") final String googleAccoung,
+            @RequestParam("userKey") final String userKey, final HttpServletRequest request,
             final HttpSession session) {
         Boolean canAdd = null;
         String response;
 
-        canAdd = googleAccount.canAddAccount(userId);
+        // Vérifier que l'utilisateur (userKey) existe 
+        // Vérifier que account n'existe pas (googleAccount)
+
+        if (userKey != null && googleAccount == null) {
+
+        }
+
+        canAdd = googleAccount.canAddAccount(userKey);
 
         if (canAdd) {
             // redirect to the authorization flow
             final AuthorizationCodeRequestUrl authorizationUrl = flow.newAuthorizationUrl();
             authorizationUrl.setRedirectUri(buildRedirectUri(request, configuration.getoAuth2CallbackUrl()));
             // store userId in session for CallBack Access
-            session.setAttribute("userId", userId);
+            session.setAttribute("userId", userKey);
             response = "redirect:" + authorizationUrl.build();
         } else {
             response = "errorOccurs";
@@ -97,10 +105,12 @@ public class GoogleController {
         try {
             final String decodedCode = extracCode(request);
             final String redirectUri = buildRedirectUri(request, configuration.getoAuth2CallbackUrl());
-            final String userId = getUserid(session);
-            Boolean isAdded = googleAccount.retrieveUserTokenAndStore(decodedCode, redirectUri, userId);
+            final String userKey = getUserid(session);
+            Boolean isAdded = googleAccount.retrieveUserTokenAndStore(decodedCode, redirectUri, userKey);
             if (isAdded) {
-                redirect = "redirecete:/email/unread/" + userId;
+                redirect = "redirecete:/email/unread/" + userKey;
+                // sauvegarder lien entre User -> Account
+
             } else {
                 redirect = "error";
             }

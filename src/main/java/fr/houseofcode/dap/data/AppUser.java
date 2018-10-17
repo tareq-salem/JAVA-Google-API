@@ -31,7 +31,7 @@ public class AppUser {
      *
      */
     @OneToMany
-    private List<GmailUser> guser;
+    private List<GoogleUser> guser;
 
     /**
      *
