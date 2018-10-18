@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
@@ -15,6 +16,8 @@ import com.google.api.client.util.DateTime;
 import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.Events;
+
+import fr.houseofcode.dap.data.AppUserRepository;
 
 /**
  * @author adminHOC
@@ -25,6 +28,12 @@ public class CalendarService extends GoogleService {
 
     /** Small enough. */
     private static final int SMALL_MAX_ITEM_PER_PAGE = 3;
+
+    /**
+    *
+    */
+    @Autowired
+    private AppUserRepository repository;
 
     /**
      *
@@ -92,16 +101,16 @@ public class CalendarService extends GoogleService {
 
     /**
     *
-    * @param userId userId
+    * @param userKey userId
     * @param calendarId calendarId
     * @throws GeneralSecurityException  GeneralSecurityException
     * @throws IOException  IOException
     * @return Event sUmary
     */
-    public String displayNext3Events(final String userId, final String calendarId)
+    public String displayNext3Events(final String userKey, final String calendarId)
             throws GeneralSecurityException, IOException {
         String reponse = "";
-        Calendar service = getService(userId);
+        Calendar service = getService(userKey);
 
         //rechercher le prochain Event
         DateTime now = new DateTime(System.currentTimeMillis());

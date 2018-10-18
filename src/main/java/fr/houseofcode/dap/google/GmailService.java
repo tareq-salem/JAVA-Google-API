@@ -10,6 +10,7 @@ import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,6 +23,10 @@ import com.google.api.services.gmail.model.Label;
 import com.google.api.services.gmail.model.ListMessagesResponse;
 import com.google.api.services.gmail.model.Message;
 
+import fr.houseofcode.dap.data.AppUser;
+import fr.houseofcode.dap.data.AppUserRepository;
+import fr.houseofcode.dap.data.GoogleUser;
+
 /**
  * @author adminHOC
  *
@@ -33,6 +38,12 @@ public class GmailService extends GoogleService {
      * Logger.
      */
     private static final Logger LOG = LogManager.getLogger();
+
+    /**
+    *
+    */
+    @Autowired
+    private AppUserRepository repository;
 
     /** Small enough. */
     //private static final int SMALL_MAX_ITEM_PER_PAGE = 10;
@@ -80,15 +91,23 @@ public class GmailService extends GoogleService {
 
     /**
      * create.
-     * @param userId userId
+     * @param userKey AppUser key
      * @return return
      * @throws IOException IOException
      * @throws GeneralSecurityException IOException
      */
-    public Integer getNbUnreadEmail(final String userId) throws IOException, GeneralSecurityException {
-        List<Message> allMessages = getMessages(userId, "me", "is:UNREAD in:inbox");
-        System.out.println(allMessages);
-        return allMessages.size();
+    public Integer getNbUnreadEmail(final String userKey) throws IOException, GeneralSecurityException {
+
+        AppUser currentUser = repository.getByUserKey(userKey);
+        List<GoogleUser> gUsers = currentUser.getGuser();
+        Integer nbMail = 0;
+
+        for (GoogleUser guser : gUsers) {
+            List<Message> allMessages = getMessages(guser.getName(), "me", "is:UNREAD in:inbox");
+            //System.out.println(allMessages);
+            nbMail += allMessages.size();
+        }
+        return nbMail;
     }
 
     /**
@@ -101,10 +120,10 @@ public class GmailService extends GoogleService {
      * @throws GeneralSecurityException GeneralSecurityException
      */
     @RequestMapping("/message/{guserid}")
-    private List<Message> getMessages(@RequestParam("userkey") final String userId,
+    private List<Message> getMessages(@RequestParam("userKey") final String userKey,
             @PathVariable("guserid") final String gUserId, final String query)
             throws IOException, GeneralSecurityException {
-        Gmail service = getService(userId);
+        Gmail service = getService(userKey);
         ListMessagesResponse response = service.users().messages().list(gUserId).setQ(query).execute();
 
         List<Message> messages = new ArrayList<Message>();
@@ -132,8 +151,8 @@ public class GmailService extends GoogleService {
      * @throws GeneralSecurityException the GeneralSecurityException
      * @throws
      */
-    public String listMessages(final String userId, final String query) throws IOException, GeneralSecurityException {
-        List<Message> messages = getMessages(userId, "me", query);
+    public String listMessages(final String userKey, final String query) throws IOException, GeneralSecurityException {
+        List<Message> messages = getMessages(userKey, "me", query);
         /** structurer la String de resultat*/
         String builtMessage = null;
         for (Message message : messages) {

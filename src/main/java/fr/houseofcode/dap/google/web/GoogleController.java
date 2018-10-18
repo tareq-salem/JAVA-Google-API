@@ -90,7 +90,7 @@ public class GoogleController {
             LOG.info("erreur l'utilisateur n'existe pas");
             canAdd = false;
         } else {
-            // Vérifier que account n'existe pas (googleAccount). rechercher dasns le compte lié à currentUser
+            // Vérifier que account n'existe pas (googleAccount). rechercher dans le compte lié à currentUser
             List<GoogleUser> gUsers = currentUser.getGuser();
             // bouclé !
 
@@ -242,8 +242,6 @@ public class GoogleController {
     public final String remove(@PathVariable final String userId) {
         String nextView;
         Boolean isDeleted = null;
-
-        //TODO 1-fsdfsdf
 
         try {
             isDeleted = googleAccount.remove(userId);

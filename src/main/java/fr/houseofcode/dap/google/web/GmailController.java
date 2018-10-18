@@ -33,26 +33,23 @@ public class GmailController {
 
     /**
      * create.
-     * @param userId userId
+     * @param userkey userkey
      * @return return
      * @throws IOException IOException
      * @throws GeneralSecurityException IOException
      */
     @RequestMapping("/unread")
-    public Integer getNbUnreadEmail(@RequestParam("userkey") final String userId) {
-
+    public Integer getNbUnreadEmail(@RequestParam("userKey") final String userKey) {
         Integer mail = null;
 
         try {
-            mail = gmailService.getNbUnreadEmail(userId);
+            mail = gmailService.getNbUnreadEmail(userKey);
         } catch (IOException e) {
-            LOG.error("erreur lors de l'appel du nb unread rmail  pour le userId : " + userId, e);
+            LOG.error("erreur lors de l'appel du nb unread rmail  pour le userId : " + userKey, e);
         } catch (GeneralSecurityException e) {
-            LOG.error("erreur lors de l'appel du nb unread rmail pour le userId : " + userId, e);
+            LOG.error("erreur lors de l'appel du nb unread rmail pour le userId : " + userKey, e);
         }
 
         return mail;
-
     }
-
 }
