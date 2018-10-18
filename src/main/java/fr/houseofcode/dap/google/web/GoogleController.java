@@ -75,28 +75,42 @@ public class GoogleController {
      * @throws GeneralSecurityException the GeneralSecurityException
      */
     @RequestMapping("/account/add/{googleAccount}") // /account/add/bob?userKey=gertrude
-    public String addAccount(@PathVariable("googleAccount") final String googleAccoung,
+    public String addAccount(@PathVariable("googleAccount") final String googleAccountName,
             @RequestParam("userKey") final String userKey, final HttpServletRequest request,
             final HttpSession session) {
-        Boolean canAdd = null;
+        Boolean canAdd = true;
         String response;
 
-        canAdd = googleAccount.canAddAccount(userKey);
+        //canAdd = googleAccount.canAddAccount(googleAccountName);
 
         // Vérifier que l'utilisateur (userKey) existe
-
         AppUser currentUser = repository.getByUserKey(userKey);
+        //Erreur user inexistant
+        if (null == currentUser) {
+            LOG.info("erreur l'utilisateur n'existe pas");
+            canAdd = false;
+        } else {
+            // Vérifier que account n'existe pas (googleAccount). rechercher dasns le compte lié à currentUser
+            List<GoogleUser> gUsers = currentUser.getGuser();
+            // bouclé !
 
-        // Vérifier que account n'existe pas (googleAccount). rechercher dasns le compte lié à currentUser
+            for (GoogleUser guser : gUsers) {
+                if (googleAccountName.equals(guser.getName())) {
+                    //Erreur compte existant
+                    LOG.info("erreur l'utilisateur existe deja");
+                    canAdd = false;
+                    break;
+                }
+            }
+        }
 
-        List<GoogleUser> gUsers = currentUser.getGuser();
-
-        if (canAdd && userKey != null && googleAccount == null) {
+        if (canAdd) {
             // redirect to the authorization flow
             final AuthorizationCodeRequestUrl authorizationUrl = flow.newAuthorizationUrl();
             authorizationUrl.setRedirectUri(buildRedirectUri(request, configuration.getoAuth2CallbackUrl()));
             // store userId in session for CallBack Access
-            session.setAttribute("userId", userKey);
+            session.setAttribute("userKey", userKey);
+            session.setAttribute("googleAccountName", googleAccountName);
             response = "redirect:" + authorizationUrl.build();
         } else {
             response = "errorOccurs";
@@ -118,22 +132,24 @@ public class GoogleController {
     @RequestMapping("/oAuth2Callback")
     public String oAuthCallback(@RequestParam final String code, final HttpServletRequest request,
             final HttpSession session) {
-        String redirect = null;
+        String redirect = "callBackError";
 
         try {
             final String decodedCode = extracCode(request);
             final String redirectUri = buildRedirectUri(request, configuration.getoAuth2CallbackUrl());
-            final String userKey = getUserid(session);
-            Boolean isAdded = googleAccount.retrieveUserTokenAndStore(decodedCode, redirectUri, userKey);
+            final String userKey = getUserKey(session);
+            final String googleAccountName = getGoogleAccountName(session);
+            //s'inspirer de getUserKey(session);
+
+            Boolean isAdded = googleAccount.retrieveUserTokenAndStore(decodedCode, redirectUri, googleAccountName);
             if (isAdded) {
-                redirect = "redirecete:/email/unread/" + userKey;
                 // sauvegarder lien entre User -> Account
-
                 AppUser currentUser = repository.getByUserKey(userKey);
-
+                currentUser.getGuser().add(new GoogleUser(googleAccountName));
+                repository.save(currentUser);
                 LOG.info(currentUser);
 
-                redirect = "error";
+                redirect = "redirect:/emails/unread?userkey=" + userKey;
             }
         } catch (ServletException e) {
             LOG.error("Error while retrievieng Tokens form Callback", e);
@@ -148,16 +164,35 @@ public class GoogleController {
      * @return the current User Id in Session
      * @throws ServletException if no User Id in session
      */
-    private String getUserid(final HttpSession session) throws ServletException {
-        String userId = null;
-        if (null != session && null != session.getAttribute("userId")) {
-            userId = (String) session.getAttribute("userId");
+    private String getUserKey(final HttpSession session) throws ServletException {
+        String userKey = null;
+        if (null != session && null != session.getAttribute("userKey")) {
+            userKey = (String) session.getAttribute("userKey");
         }
-        if (null == userId) {
-            LOG.error("userId in Session is NULL in Callback");
-            throw new ServletException("Error when trying to add Google acocunt : userId is NULL is User Session");
+        if (null == userKey) {
+            LOG.error("userKey in Session is NULL in Callback");
+            throw new ServletException("Error when trying to add Google acocunt : userKey is NULL is User Session");
         }
-        return userId;
+        return userKey;
+    }
+
+    /**
+     * retrieve the googleAccountName in Session.
+     * @param session the HTTP Session
+     * @return the current googleAccountName in Session
+     * @throws ServletException if no googleAccountName in session
+     */
+    private String getGoogleAccountName(final HttpSession session) throws ServletException {
+        String googleAccountName = null;
+        if (null != session && null != session.getAttribute("googleAccountName")) {
+            googleAccountName = (String) session.getAttribute("googleAccountName");
+        }
+        if (null == googleAccountName) {
+            LOG.error("googleAccountName in Session is NULL in Callback");
+            throw new ServletException(
+                    "Error when trying to add Google acocunt : googleAccountName is NULL in googleAccountName Session");
+        }
+        return googleAccountName;
     }
 
     /**
@@ -207,6 +242,8 @@ public class GoogleController {
     public final String remove(@PathVariable final String userId) {
         String nextView;
         Boolean isDeleted = null;
+
+        //TODO 1-fsdfsdf
 
         try {
             isDeleted = googleAccount.remove(userId);

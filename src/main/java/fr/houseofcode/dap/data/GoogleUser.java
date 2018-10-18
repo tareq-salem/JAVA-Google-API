@@ -22,6 +22,8 @@ public class GoogleUser {
     @Id
     private Integer id;
 
+    private String name;
+
     /**
     *
     */
@@ -44,10 +46,17 @@ public class GoogleUser {
 
     /**
     *
-    * @param id
+    * @param user internal user
     */
-    public void setId(int id) {
-        this.id = id;
+    public GoogleUser(final String n) {
+        this.name = n;
+    }
+
+    /**
+     * @return the name
+     */
+    public String getName() {
+        return name;
     }
 
     /* (non-Javadoc)

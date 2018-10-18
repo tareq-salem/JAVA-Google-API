@@ -89,7 +89,7 @@ public class Launcher {
     }
     //Controller Con = new Controller();
 
-    @Bean
+    //@Bean
     public CommandLineRunner demo(AppUserRepository repository) {
         return (args) -> {
             repository.save(new AppUser("Bob"));
